@@ -21,12 +21,17 @@ public class FileServerHandler implements FileServer.Iface
         this.coordinatorIP = coordinatorIP;
         this.coordinatorPort = coordinatorPort;
 
-        saveDir = new File("./data/"+InetAddress.getLocalHost().getHostAddress()+"_"+port);
-        if (!saveDir.exists())
-        {
-            saveDir.mkdirs();
+        try{
+            saveDir = new File("./data/"+InetAddress.getLocalHost().getHostAddress()+"_"+port);
+            if (!saveDir.exists())
+            {
+                saveDir.mkdirs();
+            }
         }
-
+        catch (Exception x)
+        {
+            x.printStackTrace();
+        }
         //todo:init filelist??
     }
 
@@ -39,24 +44,27 @@ public class FileServerHandler implements FileServer.Iface
     @Override
     public String read(String filename) throws org.apache.thrift.TException
     {
-        TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
-        TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-        Coordinator.Client client = new Coordinator.Client(protocol);
-        transport.open();
-        String result = client.read(filename);
-        transport.close();
-        return result;
+        return null;
+        //todo:
+//        TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
+//        TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+//        Coordinator.Client client = new Coordinator.Client(protocol);
+//        transport.open();
+//        String result = client.read(filename);
+//        transport.close();
+//        return result;
     }
 
     @Override
     public void write(String filename, String contents) throws org.apache.thrift.TException
     {
-        TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
-        TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-        Coordinator.Client client = new Coordinator.Client(protocol);
-        transport.open();
-        client.write(filename, contents);
-        transport.close();
+        //todo:
+//        TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
+//        TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+//        Coordinator.Client client = new Coordinator.Client(protocol);
+//        transport.open();
+//        client.write(filename, contents);
+//        transport.close();
     }
 
     @Override

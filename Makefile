@@ -7,7 +7,7 @@ class_dir:
 Client:
 	javac $(FLAGS) src/Client.java
 FileServer:
-	javac $(FLAGS) src/FileServer.java
+	javac $(FLAGS) src/Server.java
 Coordinator:
 	javac $(FLAGS) src/Coordinator.java
 

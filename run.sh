@@ -8,7 +8,8 @@ then
         java -cp ".:/usr/local/Thrift/*" Client
     elif [ $1 == 'FileServer' ]
     then
-        java -cp ".:/usr/local/Thrift/*" FileServer
+        params = $*
+        java -cp ".:/usr/local/Thrift/*" Server {$params:2}
     elif [ $1 == 'Coordinator' ]
     then
         java -cp ".:/usr/local/Thrift/*" Coordinator

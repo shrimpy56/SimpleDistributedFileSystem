@@ -20,12 +20,12 @@ public class Server {
             int port = Integer.parseInt(args[2]);
 
             // @todo: register node
-            TTransport transport = new TSocket(serverIP, serverPort);
-            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-            Coordinator.Client serverClient = new Coordinator.Client(protocol);
-            transport.open();
-            serverClient.join(InetAddress.getLocalHost().getHostAddress(), port);
-            transport.close();
+//            TTransport transport = new TSocket(serverIP, serverPort);
+//            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+//            Coordinator.Client serverClient = new Coordinator.Client(protocol);
+//            transport.open();
+//            serverClient.join(InetAddress.getLocalHost().getHostAddress(), port);
+//            transport.close();
 
             //Create Thrift server socket
             TServerTransport serverTransport = new TServerSocket(port);
