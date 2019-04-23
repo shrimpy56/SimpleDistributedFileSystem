@@ -13,6 +13,5 @@ service FileServer
     //for coordinator
     string doRead(1: string filename);
     void doWrite(1: string filename, 2: string contents);
-    void clearFiles();
     string getFileList();
 }

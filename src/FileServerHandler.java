@@ -11,7 +11,6 @@ import java.lang.*;
 public class FileServerHandler implements FileServer.Iface
 {
     private Map<String, Integer> versionMap = new HashMap<>();
-    //private List<File> fileList = new ArrayList<>();
     private String coordinatorIP;
     private int coordinatorPort;
     private File saveDir;
@@ -27,12 +26,19 @@ public class FileServerHandler implements FileServer.Iface
             {
                 saveDir.mkdirs();
             }
+            else //clear folder
+            {
+                File[] files = saveDir.listFiles();
+                for (int i = 0; i < files.length; ++i)
+                {
+                    files[i].delete();
+                }
+            }
         }
         catch (Exception x)
         {
             x.printStackTrace();
         }
-        //todo:init filelist??
     }
 
     @Override
@@ -136,7 +142,7 @@ public class FileServerHandler implements FileServer.Iface
     @Override
     public void clearFiles() throws org.apache.thrift.TException
     {
-        //@todo ??
+        //@todo delete this function
     }
 
     @Override
