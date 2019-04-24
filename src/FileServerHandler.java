@@ -141,12 +141,6 @@ public class FileServerHandler implements FileServer.Iface
     }
 
     @Override
-    public void clearFiles() throws org.apache.thrift.TException
-    {
-        //@todo delete this function
-    }
-
-    @Override
     public String getFileList() throws org.apache.thrift.TException
     {
         StringBuffer buffer = new StringBuffer();
