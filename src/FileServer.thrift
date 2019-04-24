@@ -1,9 +1,3 @@
-//struct Info
-//{
-//    1: string ip,
-//    2: i32 port,
-//}
-
 service FileServer
 {
     i32 getVersionOf(1: string filename);
@@ -15,4 +9,9 @@ service FileServer
     void doWrite(1: string filename, 2: string contents);
     void clearFiles();
     string getFileList();
+
+    // for coordinator
+    bool join(1: string IP, 2: i32 port);
+    string read(1: string filename);
+    void write(1: string filename, 2: string contents);
 }
