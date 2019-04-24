@@ -50,11 +50,13 @@ public class CoordinatorHandler implements FileServer.Iface
             int random_server = r.nextInt();
             String IP = ServerIP.get(random_server);
             int port = ServerPort.get(random_server);
+            System.out.println("Choose Server IP=" + IP + ", port=" + port +" to read.");
             TTransport transport = new TSocket(IP, port);
             TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
             FileServer.Client client = new FileServer.Client(protocol);
             transport.open();
-            String result = client.doread(filename);
+            String contents = client.doread(filename);
+            int version = client.getVersionOf(filename);
             transport.close();
         }
         return result;
@@ -69,11 +71,13 @@ public class CoordinatorHandler implements FileServer.Iface
             int random_server = r.nextInt();
             String IP = ServerIP.get(random_server);
             int port = ServerPort.get(random_server);
+            System.out.println("Choose Server IP=" + IP + ", port=" + port +" to write.");
             TTransport transport = new TSocket(IP, port);
             TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
             FileServer.Client client = new FileServer.Client(protocol);
             transport.open();
-            String result = client.dowrite(filename, contents);
+            client.dowrite(filename, contents);
+            int version = client.getVersionOf(filename);
             transport.close();
         }
         return;
@@ -82,7 +86,7 @@ public class CoordinatorHandler implements FileServer.Iface
     private void printServers()
     {
         System.out.println("Now we have following servers:");
-        for(int i = 0; i < this.N; i++)
+        for(int i = 0; i < this.ServerNum; i++)
         {
             System.out.println("Server No." + i
                     + ", Server IP = " + ServerIP.get(i)
@@ -92,3 +96,7 @@ public class CoordinatorHandler implements FileServer.Iface
     }
 }
 
+public class TaskQueue
+{
+    private
+}

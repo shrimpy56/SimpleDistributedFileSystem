@@ -8,7 +8,7 @@ import java.net.InetAddress;
 import java.io.*;
 import java.util.*;
 
-public class CoordinatorServer {
+public class Coordinator {
     public static CoordinatorHandler handler;
     public static FileServer.Processor<CoordinatorServerHandler> processor;
 

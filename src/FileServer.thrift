@@ -11,6 +11,4 @@ service FileServer
 
     // for coordinator
     bool join(1: string IP, 2: i32 port);
-    string read(1: string filename);
-    void write(1: string filename, 2: string contents);
 }

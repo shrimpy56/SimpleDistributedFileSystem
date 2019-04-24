@@ -7,8 +7,6 @@ import java.net.InetAddress;
 
 import java.io.*;
 import java.util.*;
-import java.lang.*;
-import java.math.*;
 
 public class Server {
 
@@ -19,13 +17,22 @@ public class Server {
             int serverPort = Integer.parseInt(args[1]);
             int port = Integer.parseInt(args[2]);
 
-            // @todo: register node
-//            TTransport transport = new TSocket(serverIP, serverPort);
-//            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-//            Coordinator.Client serverClient = new Coordinator.Client(protocol);
-//            transport.open();
-//            serverClient.join(InetAddress.getLocalHost().getHostAddress(), port);
-//            transport.close();
+            // register node
+            TTransport transport = new TSocket(serverIP, serverPort);
+            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+            FileServer.Client serverClient = new FileServer.Client(protocol);
+            transport.open();
+            boolean success = serverClient.join(InetAddress.getLocalHost().getHostAddress(), port);
+            transport.close();
+            if (success)
+            {
+                System.out.println("register node successful.");
+            }
+            else
+            {
+                System.out.println("register node fail.");
+                return;
+            }
 
             //Create Thrift server socket
             TServerTransport serverTransport = new TServerSocket(port);
