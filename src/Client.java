@@ -65,24 +65,26 @@ public class Client {
                         Thread thread = new Thread(new Runnable(){
                             @Override
                             public void run() {
+                                TTransport transport = new TSocket(serverIP, serverPort);
+                                TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+                                FileServer.Client server = new FileServer.Client(protocol);
+
+                                transport.open();
                                 for (int j = 0; j < writeTimes; ++j)
                                 {
                                     int random = (int)(Math.random() * fileNumber);
                                     String filename = "filename"+random;
 
-                                    transport.open();
                                     server.write(filename, filename);
-                                    transport.close();
                                 }
                                 for (int j = 0; j < readTimes; ++j)
                                 {
                                     int random = (int)(Math.random() * fileNumber);
                                     String filename = "filename"+random;
 
-                                    transport.open();
                                     String result = server.read(filename);
-                                    transport.close();
                                 }
+                                transport.close();
                                 countDown.countDown();
                             }
                         });
