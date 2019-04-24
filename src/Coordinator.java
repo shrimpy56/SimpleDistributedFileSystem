@@ -10,7 +10,7 @@ import java.util.*;
 
 public class Coordinator {
     public static CoordinatorHandler handler;
-    public static FileServer.Processor<CoordinatorServerHandler> processor;
+    public static FileServer.Processor<CoordinatorHandler> processor;
 
     public static void main(String [] args) {
         try {

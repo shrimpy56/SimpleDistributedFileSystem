@@ -6,13 +6,14 @@ import org.apache.thrift.transport.TSSLTransportFactory.TSSLTransportParameters;
 import java.net.InetAddress;
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CoordinatorHandler implements FileServer.Iface
 {
-    private ArrayList<String> ServerIP = Collections.synchronizedList(new ArrayList<String>());
-    private ArrayList<Integer> ServerPort = Collections.synchronizedList(new ArrayList<Integer>());
-    private static AtomicInteger ServerNum = new AtomicInteger(0);
+    private ArrayList<String> ServerIP = new ArrayList<String>();
+    private ArrayList<Integer> ServerPort = new ArrayList<Integer>();
+    private static int ServerNum = 0;
+    private static AtomicBoolean running = new AtomicBoolean(false);
     private final int Nr, Nw, N;
     private Map<String, Integer> versionMap = new ConcurrentHashMap<String, Integer>();
 
@@ -24,7 +25,7 @@ public class CoordinatorHandler implements FileServer.Iface
     }
 
     @Override
-    bool join(String IP, int port) throws org.apache.thrift.TException
+    boolean join(String IP, int port) throws org.apache.thrift.TException
     {
         System.out.println("Join request from IP:" + IP + ", port:" + port);
         if (ServerNum >= this.N)
@@ -32,32 +33,49 @@ public class CoordinatorHandler implements FileServer.Iface
             System.out.println("Sorry, now the pool is full, can't join.");
             return false;
         }
-        ServerIP.add(IP);
-        ServerPort.add(port);
-        ServerNum.incrementAndGet();
-        printServers();
-        return true;
+        if (running.compareAndSet(false, true))
+        // deal with multiple joins
+        {
+            ServerIP.add(IP);
+            ServerPort.add(port);
+            ServerNum.incrementAndGet();
+            printServers();
+            running.set(false);
+            return true;
+        }
+        else
+        {
+            System.out.println("Sorry, the Coordinator is busy, can't join.");
+            return false;
+        }
     }
 
     @Override
     public String read(String filename) throws org.apache.thrift.TException
     {
-        if (!versionHashMap.containsKey(filename)) return "";
-        taskQueue.get(filename);
-        for(int i = 0; i < Nr; i++)
+        boolean[] used = getTargetServer(this.Nr);
+        for(int i = 0; i < this.ServerNum; i++)
         {
-            Random r = new Random(ServerNum);
-            int random_server = r.nextInt();
-            String IP = ServerIP.get(random_server);
-            int port = ServerPort.get(random_server);
-            System.out.println("Choose Server IP=" + IP + ", port=" + port +" to read.");
-            TTransport transport = new TSocket(IP, port);
-            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-            FileServer.Client client = new FileServer.Client(protocol);
-            transport.open();
-            String contents = client.doread(filename);
-            int version = client.getVersionOf(filename);
-            transport.close();
+            if (used[i])
+            {
+                String IP = ServerIP.get(i);
+                int port = ServerPort.get(i);
+                System.out.println("Choose Server IP=" + IP + ", port=" + port +" to read.");
+                try
+                {
+                    TTransport transport = new TSocket(IP, port);
+                    TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+                    FileServer.Client client = new FileServer.Client(protocol);
+                    transport.open();
+                    String result = client.doRead(filename);
+                    int version = client.getVersionOf(filename);
+                    transport.close();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
         return result;
     }
@@ -65,22 +83,107 @@ public class CoordinatorHandler implements FileServer.Iface
     @Override
     public void write(String filename, String contents) throws org.apache.thrift.TException
     {
-        for(int i = 0; i < Nw; i++)
+        boolean[] used = getTargetServer(this.Nw);
+        for(int i = 0; i < this.ServerNum; i++)
         {
-            Random r = new Random(ServerNum);
-            int random_server = r.nextInt();
-            String IP = ServerIP.get(random_server);
-            int port = ServerPort.get(random_server);
-            System.out.println("Choose Server IP=" + IP + ", port=" + port +" to write.");
-            TTransport transport = new TSocket(IP, port);
-            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-            FileServer.Client client = new FileServer.Client(protocol);
-            transport.open();
-            client.dowrite(filename, contents);
-            int version = client.getVersionOf(filename);
-            transport.close();
+            if (used[i])
+            {
+                String IP = ServerIP.get(i);
+                int port = ServerPort.get(i);
+                System.out.println("Choose Server IP=" + IP + ", port=" + port +" to write.");
+                try
+                {
+                    TTransport transport = new TSocket(IP, port);
+                    TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+                    FileServer.Client client = new FileServer.Client(protocol);
+                    transport.open();
+                    client.doWrite(filename, contents);
+                    int version = client.getVersionOf(filename);
+                    transport.close();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
         }
         return;
+    }
+
+    private boolean[] getTargetServer(int size)
+    {
+        boolean[] used = new boolean[this.ServerNum];
+        Random r = new Random();
+        for(int i = 0; i < size; i++)
+        {
+            while (true)
+            {
+                int random_server = r.nextInt(this.ServerNum);
+                if (!used[random_server])
+                {
+                    used[random_server] = true;
+                    break;
+                }
+            }
+        }
+        return used;
+    }
+
+    private int findNewestVersion()
+    {
+        int maxIndex = -1;
+        int maxVersion = -1;
+        for(int i = 0; i < this.ServerNum; i++)
+        {
+            String IP = ServerIP.get(i);
+            int port = ServerPort.get(i);
+            try
+            {
+                TTransport transport = new TSocket(IP, port);
+                TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+                FileServer.Client client = new FileServer.Client(protocol);
+                transport.open();
+                int version = client.getVersionOf(filename);
+                if (version > maxVersion)
+                {
+                    maxVersion = version;
+                    maxIndex = i;
+                }
+                transport.close();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
+        return maxIndex;
+        // give the machine which has the newest version
+    }
+
+    private void sync()
+    {
+        for(int i = 0; i < this.ServerNum; i++)
+        {
+            String IP = ServerIP.get(i);
+            int port = ServerPort.get(i);
+            try
+            {
+                TTransport transport = new TSocket(IP, port);
+                TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+                FileServer.Client client = new FileServer.Client(protocol);
+                transport.open();
+                int version = client.getVersionOf(filename);
+                if (version < maxVersion)
+                {
+                    client.doWrite();
+                }
+                transport.close();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void printServers()
@@ -96,7 +199,3 @@ public class CoordinatorHandler implements FileServer.Iface
     }
 }
 
-public class TaskQueue
-{
-    private
-}
