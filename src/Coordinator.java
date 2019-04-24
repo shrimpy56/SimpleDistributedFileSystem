@@ -30,18 +30,19 @@ public class Coordinator {
                 return;
             }
 
+            String IP = InetAddress.getLocalHost().getHostAddress();
             //Create Thrift server socket
             TServerTransport serverTransport = new TServerSocket(port);
             TTransportFactory factory = new TFramedTransport.Factory();
             //Create service request handler
-            handler = new CoordinatorHandler(Nr, Nw, N);
+            handler = new CoordinatorHandler(Nr, Nw, N, IP, port);
             processor = new FileServer.Processor(handler);
             //Set server arguments
             TThreadPoolServer.Args arguments = new TThreadPoolServer.Args(serverTransport);
             arguments.processor(processor);  //Set handler
             arguments.transportFactory(factory);  //Set FramedTransport (for performance)
 
-            System.out.println("Coordinator running on: " + InetAddress.getLocalHost().getHostAddress() + ":" + port);
+            System.out.println("Coordinator running on: " + IP + ":" + port);
             //Run server
             TServer server = new TThreadPoolServer(arguments);
             server.serve();
