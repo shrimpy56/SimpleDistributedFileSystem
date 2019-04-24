@@ -7,10 +7,11 @@ import java.net.InetAddress;
 import java.io.*;
 import java.util.*;
 import java.lang.*;
+import java.util.concurrent.*;
 
 public class FileServerHandler implements FileServer.Iface
 {
-    private Map<String, Integer> versionMap = new HashMap<>();
+    private Map<String, Integer> versionMap = new ConcurrentHashMap<>();
     private String coordinatorIP;
     private int coordinatorPort;
     private File saveDir;
