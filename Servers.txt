@@ -1,0 +1,7 @@
+atlas.cselabs.umn.edu:9999
+csel-kh4250-01.cselabs.umn.edu:10000
+csel-kh4250-02.cselabs.umn.edu:10001
+csel-kh4250-03.cselabs.umn.edu:10002
+csel-kh4250-04.cselabs.umn.edu:10003
+csel-kh4250-05.cselabs.umn.edu:10004
+csel-kh4250-06.cselabs.umn.edu:10005

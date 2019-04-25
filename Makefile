@@ -14,4 +14,4 @@ Coordinator:
 .PHONY : clean
 clean:
 	@echo "Cleaning..."
-	@rm -rf class/
+	@rm -rf class/ data

@@ -10,10 +10,10 @@ import java.lang.*;
 import java.util.concurrent.*;
 
 public class FileServerHandler implements FileServer.Iface {
-    private Map<String, Integer> versionMap = new ConcurrentHashMap<>();
-    private String coordinatorIP;
-    private int coordinatorPort;
-    private File saveDir;
+    protected Map<String, Integer> versionMap = new ConcurrentHashMap<>();
+    protected String coordinatorIP;
+    protected int coordinatorPort;
+    protected File saveDir;
 
     void setData(String coordinatorIP, int coordinatorPort, int port) {
         this.coordinatorIP = coordinatorIP;
@@ -58,7 +58,7 @@ public class FileServerHandler implements FileServer.Iface {
     }
 
     @Override
-    public void write(String filename, String contents) {
+    public boolean write(String filename, String contents) {
         try {
             TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
             TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
@@ -69,6 +69,7 @@ public class FileServerHandler implements FileServer.Iface {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return true;
     }
 
     @Override
@@ -77,6 +78,8 @@ public class FileServerHandler implements FileServer.Iface {
         try {
             File file = new File(saveDir, filename);
             if (file != null && file.isFile() && file.exists()) {
+                System.out.println("reading file:"+file.getName());
+
                 Scanner scanner = new Scanner(file);
                 StringBuffer buffer = new StringBuffer();
                 while (scanner.hasNext()) {
@@ -86,6 +89,10 @@ public class FileServerHandler implements FileServer.Iface {
                 scanner.close();
                 result = buffer.toString();
             }
+            else
+            {
+                System.out.println("reading file error "+(file == null? "(null)" : file.getName()));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -94,7 +101,7 @@ public class FileServerHandler implements FileServer.Iface {
     }
 
     @Override
-    public void doWrite(String filename, String contents, int version) {
+    public boolean doWrite(String filename, String contents, int version) {
         try {
             File file = new File(saveDir, filename);
             File parent = file.getParentFile();
@@ -106,26 +113,43 @@ public class FileServerHandler implements FileServer.Iface {
             output.print(contents);
             output.close();
 
+            System.out.println("writing. filename:"+filename+", contents:"+contents+", version:"+version);
+
             //update version
             versionMap.put(filename, version);
         }
         catch (Exception e) {
             e.printStackTrace();
         }
+
+        //log
+        getFileList();
+
+        return true;
     }
 
     @Override
     public String getFileList() {
         StringBuffer buffer = new StringBuffer();
         File[] files = saveDir.listFiles();
-        System.out.println("List of folder " + saveDir.getPath());
-        System.out.println("===============================================");
-        for (int i = 0; i < files.length; ++i) {
-            String fileInfo = "File: "+ files[i].getName() +", version " + getVersionOf(files[i].getName());
-            buffer.append(fileInfo+"\n");
+
+        String fileInfo = "List of folder " + saveDir.getPath();
+        buffer.append(fileInfo + "\n");
+        System.out.println(fileInfo);
+        fileInfo = "===============================================";
+        buffer.append(fileInfo + "\n");
+        System.out.println(fileInfo);
+
+        for (int i = 0; files != null && i < files.length; ++i)
+        {
+            fileInfo = "File: "+ files[i].getName() +", Version " + getVersionOf(files[i].getName());
+            buffer.append(fileInfo + "\n");
             System.out.println(fileInfo);
         }
-        System.out.println("===============================================");
+        fileInfo = "===============================================";
+        buffer.append(fileInfo + "\n");
+        System.out.println(fileInfo);
+
         return buffer.toString();
     }
 

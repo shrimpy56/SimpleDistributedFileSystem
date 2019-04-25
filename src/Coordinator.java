@@ -41,23 +41,26 @@ public class Coordinator {
             arguments.transportFactory(factory);  //Set FramedTransport (for performance)
 
             System.out.println("Coordinator running on: " + IP + ":" + port);
-            //Run server
-            TServer server = new TThreadPoolServer(arguments);
-            server.serve();
 
             Runnable ReqSync = new Runnable() {
                 public void run() {
                     while (true) {
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(1500);
                             // require sync every 1s
-                            handler.SetSync();
+                            handler.sync();
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                 }
             };
+            Thread thread = new Thread(ReqSync);
+            thread.start();
+
+            //Run server
+            TServer server = new TThreadPoolServer(arguments);
+            server.serve();
         } catch (Exception x) {
             x.printStackTrace();
         }

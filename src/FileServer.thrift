@@ -3,10 +3,10 @@ service FileServer
     i32 getVersionOf(1: string filename);
     //forward
     string read(1: string filename);
-    void write(1: string filename, 2: string contents);
+    bool write(1: string filename, 2: string contents);
     //for coordinator
     string doRead(1: string filename);
-    void doWrite(1: string filename, 2: string contents, 3: i32 version);
+    bool doWrite(1: string filename, 2: string contents, 3: i32 version);
     string getFileList();
 
     // for coordinator

@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CoordinatorHandler implements FileServer.Iface {
+public class CoordinatorHandler extends FileServerHandler implements FileServer.Iface {
     private static ArrayList<String> ServerIP = new ArrayList<String>();
     private static ArrayList<Integer> ServerPort = new ArrayList<Integer>();
     private static int ServerNum = 0;
@@ -17,9 +17,6 @@ public class CoordinatorHandler implements FileServer.Iface {
     private static AtomicInteger ReqNum = new AtomicInteger(0);
     private final int Nr, Nw, N;
     private static Map<String, Queue<Request>> RequestQueue = new HashMap<String, Queue<Request>>();
-    private static Map<String, Integer> versionMap = new HashMap<String, Integer>();
-    private static boolean NeedSync = false;
-    private static File saveDir;
 
     public CoordinatorHandler(int _nr, int _nw, int _n, String _ip, int _port) {
         this.Nr = _nr;
@@ -27,11 +24,22 @@ public class CoordinatorHandler implements FileServer.Iface {
         this.N = _n;
         join(_ip, _port);
         // join itself, so i == 0 means itself is Coordinator
-        saveDir = new File("../data/"+_ip+"_"+_port);
-    }
 
-    public void SetSync() {
-        NeedSync = true;
+        try {
+            saveDir = new File("../data/"+InetAddress.getLocalHost().getHostAddress()+"_"+_port);
+            if (!saveDir.exists()) {
+                saveDir.mkdirs();
+            }
+            else {//clear folder
+                File[] files = saveDir.listFiles();
+                for (int i = 0; i < files.length; ++i) {
+                    files[i].delete();
+                }
+            }
+        }
+        catch (Exception x) {
+            x.printStackTrace();
+        }
     }
 
     @Override
@@ -62,24 +70,30 @@ public class CoordinatorHandler implements FileServer.Iface {
         ReqNum.incrementAndGet();
         Request req = new Request(true, SelfNum, filename, null);
         Queue<Request> tmp = RequestQueue.get(filename);
+        if (tmp == null) {
+            tmp = new LinkedList<Request>();
+        }
         tmp.add(req);
         RequestQueue.put(filename, tmp);
         while (RequestQueue.get(filename).peek().RequestNo != SelfNum){
-            if (NeedSync) {
-                sync();
-                NeedSync = false;
+            try {
+                Thread.sleep(1);
+                // active as a lock for this file
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            // active as a lock for this file
         }
         tmp = RequestQueue.get(filename);
-        req = tmp.remove();
-        RequestQueue.put(filename, tmp);
+        req = tmp.peek();
         String result = ProcessReq(req.RW, req.file, null);
+        tmp.poll();
+        RequestQueue.put(filename, tmp);
+
         return result;
     }
 
     @Override
-    public void write(String filename, String contents) {
+    public boolean write(String filename, String contents) {
         if (!versionMap.containsKey(filename)) {
             versionMap.put(filename, 0);
         }
@@ -87,17 +101,25 @@ public class CoordinatorHandler implements FileServer.Iface {
         ReqNum.incrementAndGet();
         Request req = new Request(false, SelfNum, filename, contents);
         Queue<Request> tmp = RequestQueue.get(filename);
+        if (tmp == null) {
+            tmp = new LinkedList<Request>();
+        }
         tmp.add(req);
+        RequestQueue.put(filename, tmp);
         while (RequestQueue.get(filename).peek().RequestNo != SelfNum) {
-            if (NeedSync) {
-                sync();
-                NeedSync = false;
+            try{
+                Thread.sleep(1);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
         tmp = RequestQueue.get(filename);
-        req = tmp.remove();
-        RequestQueue.put(filename, tmp);
+        req = tmp.peek();
         ProcessReq(req.RW, req.file, req.content);
+        tmp.poll();
+        RequestQueue.put(filename, tmp);
+
+        return true;
     }
 
     private String ProcessReq(boolean RorW, String filename, String contents) {
@@ -120,13 +142,16 @@ public class CoordinatorHandler implements FileServer.Iface {
                 String IP = ServerIP.get(i);
                 int port = ServerPort.get(i);
                 System.out.println("Choose Server IP=" + IP + ", port=" + port +" to " + Op + ".");
+                //Coordinator itself
                 if (i == 0) {
                     int version = getVersionOf(filename);
+                    System.out.println("version of file:" + filename + " is " + version);
                     if (version > MaxVersion) {
                         if (RorW) {
                             result = doRead(filename);
                         }
                         MaxVersion = version;
+                        System.out.println("max version is:" + MaxVersion);
                     }
                     continue;
                 }
@@ -135,12 +160,14 @@ public class CoordinatorHandler implements FileServer.Iface {
                     TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
                     FileServer.Client client = new FileServer.Client(protocol);
                     transport.open();
-                    int version = getVersionOf(filename);
+                    int version = client.getVersionOf(filename);
+                    System.out.println("version of file:" + filename + " is " + version);
                     if (version > MaxVersion) {
                         if (RorW) {
                             result = client.doRead(filename);
                         }
                         MaxVersion = version;
+                        System.out.println("max version is:" + MaxVersion);
                     }
                     transport.close();
                 }
@@ -261,18 +288,38 @@ public class CoordinatorHandler implements FileServer.Iface {
         return Content;
     }
 
-    private void sync() {
+    public void sync() {
+        System.out.println("Running Synch Operation.");
         for (String filename : versionMap.keySet()) {
+            int SelfNum = ReqNum.intValue();
+            ReqNum.incrementAndGet();
+            Request req = new Request(false, SelfNum, null, null);
+            Queue<Request> tmp = RequestQueue.get(filename);
+            if (tmp == null) {
+                tmp = new LinkedList<Request>();
+            }
+            tmp.add(req);
+            RequestQueue.put(filename, tmp);
+            while (RequestQueue.get(filename).peek().RequestNo != SelfNum) {
+                try {
+                    Thread.sleep(1);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            tmp = RequestQueue.get(filename);
+            req = tmp.peek();
+
             int MaxIndex = findNewestIndex(filename);
             int MaxVersion = findVersion(MaxIndex, filename);
             String contents = findContent(MaxIndex, filename);
-            versionMap.put(filename, MaxVersion);
             // get all max version
             for (int i = 0; i < ServerNum; i++) {
                 if (i == 0) {
+                    //todo:
                     int version = getVersionOf(filename);
                     if (version < MaxVersion) {
-                        doWrite(filename, contents, version);
+                        doWrite(filename, contents, MaxVersion);
                     }
                     continue;
                 }
@@ -283,9 +330,10 @@ public class CoordinatorHandler implements FileServer.Iface {
                     TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
                     FileServer.Client client = new FileServer.Client(protocol);
                     transport.open();
+                    //todo:
                     int version = client.getVersionOf(filename);
                     if (version < MaxVersion) {
-                        client.doWrite(filename, contents, version);
+                        client.doWrite(filename, contents, MaxVersion);
                     }
                     transport.close();
                 }
@@ -293,7 +341,10 @@ public class CoordinatorHandler implements FileServer.Iface {
                     e.printStackTrace();
                 }
             }
+            tmp.poll();
+            RequestQueue.put(filename, tmp);
         }
+        System.out.println("Synch Operation Done.");
     }
 
     private void printServers() {
@@ -305,71 +356,6 @@ public class CoordinatorHandler implements FileServer.Iface {
         }
         System.out.println("-----------------------------");
     }
-
-    @Override
-    public int getVersionOf(String filename) {
-        return versionMap.getOrDefault(filename, -1);
-    }
-
-    @Override
-    public String doRead(String filename) {
-        String result = "";
-        try {
-            File file = new File(saveDir, filename);
-            if (file != null && file.isFile() && file.exists()) {
-                Scanner scanner = new Scanner(file);
-                StringBuffer buffer = new StringBuffer();
-                while (scanner.hasNext()) {
-                    String line = scanner.nextLine();
-                    buffer.append(line);
-                }
-                scanner.close();
-                result = buffer.toString();
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
-        // return empty string "" means not found
-    }
-
-    @Override
-    public void doWrite(String filename, String contents, int version) {
-        try {
-            File file = new File(saveDir, filename);
-            File parent = file.getParentFile();
-            if (parent != null && parent.isDirectory() && !parent.exists()) {
-                parent.mkdirs();
-            }
-
-            PrintWriter output = new PrintWriter(file);
-            output.print(contents);
-            output.close();
-
-            //update version
-            versionMap.put(filename, version);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public String getFileList() {
-        StringBuffer buffer = new StringBuffer();
-        File[] files = saveDir.listFiles();
-        System.out.println("List of folder " + saveDir.getPath());
-        System.out.println("===============================================");
-        for (int i = 0; i < files.length; ++i)
-        {
-            String fileInfo = "File: "+ files[i].getName() +", version " + getVersionOf(files[i].getName());
-            buffer.append(fileInfo+"\n");
-            System.out.println(fileInfo);
-        }
-        System.out.println("===============================================");
-        return buffer.toString();
-    }
-
 }
 
 class Request {
