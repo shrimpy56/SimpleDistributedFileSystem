@@ -24,12 +24,10 @@ public class Server {
             transport.open();
             boolean success = serverClient.join(InetAddress.getLocalHost().getHostAddress(), port);
             transport.close();
-            if (success)
-            {
+            if (success) {
                 System.out.println("register node successful.");
             }
-            else
-            {
+            else {
                 System.out.println("register node fail.");
                 return;
             }
@@ -40,7 +38,7 @@ public class Server {
             //Create service request handler
             FileServerHandler handler = new FileServerHandler();
             handler.setData(serverIP, serverPort, port);
-            FileServer.Processor processor = new FileServer.Processor(handler);
+            FileServer.Processor<FileServerHandler> processor = new FileServer.Processor<FileServerHandler>(handler);
             //Set server arguments
             TThreadPoolServer.Args arguments = new TThreadPoolServer.Args(serverTransport);
             arguments.processor(processor);  //Set handler

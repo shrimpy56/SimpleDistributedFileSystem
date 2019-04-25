@@ -9,77 +9,74 @@ import java.util.*;
 import java.lang.*;
 import java.util.concurrent.*;
 
-public class FileServerHandler implements FileServer.Iface
-{
+public class FileServerHandler implements FileServer.Iface {
     private Map<String, Integer> versionMap = new ConcurrentHashMap<>();
     private String coordinatorIP;
     private int coordinatorPort;
     private File saveDir;
 
-    void setData(String coordinatorIP, int coordinatorPort, int port)
-    {
+    void setData(String coordinatorIP, int coordinatorPort, int port) {
         this.coordinatorIP = coordinatorIP;
         this.coordinatorPort = coordinatorPort;
 
-        try{
-            saveDir = new File("./data/"+InetAddress.getLocalHost().getHostAddress()+"_"+port);
-            if (!saveDir.exists())
-            {
+        try {
+            saveDir = new File("../data/"+InetAddress.getLocalHost().getHostAddress()+"_"+port);
+            if (!saveDir.exists()) {
                 saveDir.mkdirs();
             }
-            else //clear folder
-            {
+            else {//clear folder
                 File[] files = saveDir.listFiles();
-                for (int i = 0; i < files.length; ++i)
-                {
+                for (int i = 0; i < files.length; ++i) {
                     files[i].delete();
                 }
             }
         }
-        catch (Exception x)
-        {
+        catch (Exception x) {
             x.printStackTrace();
         }
     }
 
     @Override
-    public int getVersionOf(String filename) throws org.apache.thrift.TException
-    {
+    public int getVersionOf(String filename) {
         return versionMap.getOrDefault(filename, -1);
     }
 
     @Override
-    public String read(String filename) throws org.apache.thrift.TException
-    {
-        TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
-        TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-        FileServer.Client client = new FileServer.Client(protocol);
-        transport.open();
-        String result = client.read(filename);
-        transport.close();
+    public String read(String filename) {
+        String result = "";
+        try {
+            TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
+            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+            FileServer.Client client = new FileServer.Client(protocol);
+            transport.open();
+            result = client.read(filename);
+            transport.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return result;
     }
 
     @Override
-    public void write(String filename, String contents) throws org.apache.thrift.TException
-    {
-        TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
-        TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
-        FileServer.Client client = new FileServer.Client(protocol);
-        transport.open();
-        client.write(filename, contents);
-        transport.close();
+    public void write(String filename, String contents) {
+        try {
+            TTransport transport = new TSocket(coordinatorIP, coordinatorPort);
+            TProtocol protocol = new TBinaryProtocol(new TFramedTransport(transport));
+            FileServer.Client client = new FileServer.Client(protocol);
+            transport.open();
+            client.write(filename, contents);
+            transport.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
-    public String doRead(String filename) throws org.apache.thrift.TException
-    {
+    public String doRead(String filename) {
         String result = "";
-        try
-        {
+        try {
             File file = new File(saveDir, filename);
-            if (file != null && file.isFile() && file.exists())
-            {
+            if (file != null && file.isFile() && file.exists()) {
                 Scanner scanner = new Scanner(file);
                 StringBuffer buffer = new StringBuffer();
                 while (scanner.hasNext()) {
@@ -89,27 +86,19 @@ public class FileServerHandler implements FileServer.Iface
                 scanner.close();
                 result = buffer.toString();
             }
-            else
-            {
-                result = "File " + filename + " does not exist!";
-            }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
-            result = "Read file " + filename + " error!";
         }
         return result;
+        // return empty string "" means not found
     }
 
     @Override
-    public void doWrite(String filename, String contents) throws org.apache.thrift.TException {
-        try
-        {
+    public void doWrite(String filename, String contents, int version) {
+        try {
             File file = new File(saveDir, filename);
             File parent = file.getParentFile();
-            if (parent != null && parent.isDirectory() && !parent.exists())
-            {
+            if (parent != null && parent.isDirectory() && !parent.exists()) {
                 parent.mkdirs();
             }
 
@@ -118,44 +107,30 @@ public class FileServerHandler implements FileServer.Iface
             output.close();
 
             //update version
-            Integer version = versionMap.get(filename);
-            if (version == null)
-            {
-                versionMap.put(filename, 0);
-            }
-            else
-            {
-                versionMap.put(filename, version+1);
-            }
+            versionMap.put(filename, version);
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public String getFileList() throws org.apache.thrift.TException
-    {
+    public String getFileList() {
         StringBuffer buffer = new StringBuffer();
         File[] files = saveDir.listFiles();
-
         System.out.println("List of folder " + saveDir.getPath());
         System.out.println("===============================================");
-        for (int i = 0; i < files.length; ++i)
-        {
+        for (int i = 0; i < files.length; ++i) {
             String fileInfo = "File: "+ files[i].getName() +", version " + getVersionOf(files[i].getName());
             buffer.append(fileInfo+"\n");
             System.out.println(fileInfo);
         }
         System.out.println("===============================================");
-
         return buffer.toString();
     }
 
     @Override
-    public boolean join(String IP, int port) throws org.apache.thrift.TException
-    {
+    public boolean join(String IP, int port) {
         System.out.println("Normal FileServer cannot process join from others.");
         return false;
     }

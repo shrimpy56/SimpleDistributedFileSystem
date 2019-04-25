@@ -19,13 +19,11 @@ public class Coordinator {
             int Nr = Integer.parseInt(args[1]);
             int Nw = Integer.parseInt(args[2]);
             int N = Integer.parseInt(args[3]);
-            if (Nr + Nw <= N)
-            {
+            if (Nr + Nw <= N) {
                 System.out.println("Constraint Nr+Nw>N not satisfied.");
                 return;
             }
-            if (Nw <= N / 2)
-            {
+            if (Nw <= N / 2) {
                 System.out.println("Constraint Nw>N/2 not satisfied.");
                 return;
             }
@@ -36,7 +34,7 @@ public class Coordinator {
             TTransportFactory factory = new TFramedTransport.Factory();
             //Create service request handler
             handler = new CoordinatorHandler(Nr, Nw, N, IP, port);
-            processor = new FileServer.Processor(handler);
+            processor = new FileServer.Processor<CoordinatorHandler>(handler);
             //Set server arguments
             TThreadPoolServer.Args arguments = new TThreadPoolServer.Args(serverTransport);
             arguments.processor(processor);  //Set handler
@@ -46,6 +44,20 @@ public class Coordinator {
             //Run server
             TServer server = new TThreadPoolServer(arguments);
             server.serve();
+
+            Runnable ReqSync = new Runnable() {
+                public void run() {
+                    while (true) {
+                        try {
+                            Thread.sleep(1000);
+                            // require sync every 1s
+                            handler.SetSync();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            };
         } catch (Exception x) {
             x.printStackTrace();
         }

@@ -6,7 +6,7 @@ service FileServer
     void write(1: string filename, 2: string contents);
     //for coordinator
     string doRead(1: string filename);
-    void doWrite(1: string filename, 2: string contents);
+    void doWrite(1: string filename, 2: string contents, 3: i32 version);
     string getFileList();
 
     // for coordinator

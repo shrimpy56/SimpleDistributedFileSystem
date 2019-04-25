@@ -45,7 +45,7 @@ public class FileServer {
 
     public String doRead(String filename) throws org.apache.thrift.TException;
 
-    public void doWrite(String filename, String contents) throws org.apache.thrift.TException;
+    public void doWrite(String filename, String contents, int version) throws org.apache.thrift.TException;
 
     public String getFileList() throws org.apache.thrift.TException;
 
@@ -63,7 +63,7 @@ public class FileServer {
 
     public void doRead(String filename, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
-    public void doWrite(String filename, String contents, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
+    public void doWrite(String filename, String contents, int version, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
     public void getFileList(org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException;
 
@@ -181,17 +181,18 @@ public class FileServer {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "doRead failed: unknown result");
     }
 
-    public void doWrite(String filename, String contents) throws org.apache.thrift.TException
+    public void doWrite(String filename, String contents, int version) throws org.apache.thrift.TException
     {
-      send_doWrite(filename, contents);
+      send_doWrite(filename, contents, version);
       recv_doWrite();
     }
 
-    public void send_doWrite(String filename, String contents) throws org.apache.thrift.TException
+    public void send_doWrite(String filename, String contents, int version) throws org.apache.thrift.TException
     {
       doWrite_args args = new doWrite_args();
       args.setFilename(filename);
       args.setContents(contents);
+      args.setVersion(version);
       sendBase("doWrite", args);
     }
 
@@ -397,9 +398,9 @@ public class FileServer {
       }
     }
 
-    public void doWrite(String filename, String contents, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
+    public void doWrite(String filename, String contents, int version, org.apache.thrift.async.AsyncMethodCallback resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      doWrite_call method_call = new doWrite_call(filename, contents, resultHandler, this, ___protocolFactory, ___transport);
+      doWrite_call method_call = new doWrite_call(filename, contents, version, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -407,10 +408,12 @@ public class FileServer {
     public static class doWrite_call extends org.apache.thrift.async.TAsyncMethodCall {
       private String filename;
       private String contents;
-      public doWrite_call(String filename, String contents, org.apache.thrift.async.AsyncMethodCallback resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int version;
+      public doWrite_call(String filename, String contents, int version, org.apache.thrift.async.AsyncMethodCallback resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.filename = filename;
         this.contents = contents;
+        this.version = version;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -418,6 +421,7 @@ public class FileServer {
         doWrite_args args = new doWrite_args();
         args.setFilename(filename);
         args.setContents(contents);
+        args.setVersion(version);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -615,7 +619,7 @@ public class FileServer {
 
       public doWrite_result getResult(I iface, doWrite_args args) throws org.apache.thrift.TException {
         doWrite_result result = new doWrite_result();
-        iface.doWrite(args.filename, args.contents);
+        iface.doWrite(args.filename, args.contents, args.version);
         return result;
       }
     }
@@ -934,7 +938,7 @@ public class FileServer {
       }
 
       public void start(I iface, doWrite_args args, org.apache.thrift.async.AsyncMethodCallback<Void> resultHandler) throws TException {
-        iface.doWrite(args.filename, args.contents,resultHandler);
+        iface.doWrite(args.filename, args.contents, args.version,resultHandler);
       }
     }
 
@@ -3928,6 +3932,7 @@ public class FileServer {
 
     private static final org.apache.thrift.protocol.TField FILENAME_FIELD_DESC = new org.apache.thrift.protocol.TField("filename", org.apache.thrift.protocol.TType.STRING, (short)1);
     private static final org.apache.thrift.protocol.TField CONTENTS_FIELD_DESC = new org.apache.thrift.protocol.TField("contents", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I32, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -3937,11 +3942,13 @@ public class FileServer {
 
     public String filename; // required
     public String contents; // required
+    public int version; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       FILENAME((short)1, "filename"),
-      CONTENTS((short)2, "contents");
+      CONTENTS((short)2, "contents"),
+      VERSION((short)3, "version");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -3960,6 +3967,8 @@ public class FileServer {
             return FILENAME;
           case 2: // CONTENTS
             return CONTENTS;
+          case 3: // VERSION
+            return VERSION;
           default:
             return null;
         }
@@ -4000,6 +4009,8 @@ public class FileServer {
     }
 
     // isset id assignments
+    private static final int __VERSION_ISSET_ID = 0;
+    private byte __isset_bitfield = 0;
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -4007,6 +4018,8 @@ public class FileServer {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.CONTENTS, new org.apache.thrift.meta_data.FieldMetaData("contents", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(doWrite_args.class, metaDataMap);
     }
@@ -4016,23 +4029,28 @@ public class FileServer {
 
     public doWrite_args(
       String filename,
-      String contents)
+      String contents,
+      int version)
     {
       this();
       this.filename = filename;
       this.contents = contents;
+      this.version = version;
+      setVersionIsSet(true);
     }
 
     /**
      * Performs a deep copy on <i>other</i>.
      */
     public doWrite_args(doWrite_args other) {
+      __isset_bitfield = other.__isset_bitfield;
       if (other.isSetFilename()) {
         this.filename = other.filename;
       }
       if (other.isSetContents()) {
         this.contents = other.contents;
       }
+      this.version = other.version;
     }
 
     public doWrite_args deepCopy() {
@@ -4043,6 +4061,8 @@ public class FileServer {
     public void clear() {
       this.filename = null;
       this.contents = null;
+      setVersionIsSet(false);
+      this.version = 0;
     }
 
     public String getFilename() {
@@ -4093,6 +4113,29 @@ public class FileServer {
       }
     }
 
+    public int getVersion() {
+      return this.version;
+    }
+
+    public doWrite_args setVersion(int version) {
+      this.version = version;
+      setVersionIsSet(true);
+      return this;
+    }
+
+    public void unsetVersion() {
+      __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __VERSION_ISSET_ID);
+    }
+
+    /** Returns true if field version is set (has been assigned a value) and false otherwise */
+    public boolean isSetVersion() {
+      return EncodingUtils.testBit(__isset_bitfield, __VERSION_ISSET_ID);
+    }
+
+    public void setVersionIsSet(boolean value) {
+      __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __VERSION_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FILENAME:
@@ -4111,6 +4154,14 @@ public class FileServer {
         }
         break;
 
+      case VERSION:
+        if (value == null) {
+          unsetVersion();
+        } else {
+          setVersion((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -4121,6 +4172,9 @@ public class FileServer {
 
       case CONTENTS:
         return getContents();
+
+      case VERSION:
+        return getVersion();
 
       }
       throw new IllegalStateException();
@@ -4137,6 +4191,8 @@ public class FileServer {
         return isSetFilename();
       case CONTENTS:
         return isSetContents();
+      case VERSION:
+        return isSetVersion();
       }
       throw new IllegalStateException();
     }
@@ -4172,6 +4228,15 @@ public class FileServer {
           return false;
       }
 
+      boolean this_present_version = true;
+      boolean that_present_version = true;
+      if (this_present_version || that_present_version) {
+        if (!(this_present_version && that_present_version))
+          return false;
+        if (this.version != that.version)
+          return false;
+      }
+
       return true;
     }
 
@@ -4188,6 +4253,11 @@ public class FileServer {
       list.add(present_contents);
       if (present_contents)
         list.add(contents);
+
+      boolean present_version = true;
+      list.add(present_version);
+      if (present_version)
+        list.add(version);
 
       return list.hashCode();
     }
@@ -4216,6 +4286,16 @@ public class FileServer {
       }
       if (isSetContents()) {
         lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.contents, other.contents);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetVersion()).compareTo(other.isSetVersion());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetVersion()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, other.version);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -4255,6 +4335,10 @@ public class FileServer {
         sb.append(this.contents);
       }
       first = false;
+      if (!first) sb.append(", ");
+      sb.append("version:");
+      sb.append(this.version);
+      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -4274,6 +4358,8 @@ public class FileServer {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bitfield = 0;
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -4314,6 +4400,14 @@ public class FileServer {
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
               }
               break;
+            case 3: // VERSION
+              if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+                struct.version = iprot.readI32();
+                struct.setVersionIsSet(true);
+              } else { 
+                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+              }
+              break;
             default:
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
           }
@@ -4339,6 +4433,9 @@ public class FileServer {
           oprot.writeString(struct.contents);
           oprot.writeFieldEnd();
         }
+        oprot.writeFieldBegin(VERSION_FIELD_DESC);
+        oprot.writeI32(struct.version);
+        oprot.writeFieldEnd();
         oprot.writeFieldStop();
         oprot.writeStructEnd();
       }
@@ -4363,19 +4460,25 @@ public class FileServer {
         if (struct.isSetContents()) {
           optionals.set(1);
         }
-        oprot.writeBitSet(optionals, 2);
+        if (struct.isSetVersion()) {
+          optionals.set(2);
+        }
+        oprot.writeBitSet(optionals, 3);
         if (struct.isSetFilename()) {
           oprot.writeString(struct.filename);
         }
         if (struct.isSetContents()) {
           oprot.writeString(struct.contents);
         }
+        if (struct.isSetVersion()) {
+          oprot.writeI32(struct.version);
+        }
       }
 
       @Override
       public void read(org.apache.thrift.protocol.TProtocol prot, doWrite_args struct) throws org.apache.thrift.TException {
         TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(2);
+        BitSet incoming = iprot.readBitSet(3);
         if (incoming.get(0)) {
           struct.filename = iprot.readString();
           struct.setFilenameIsSet(true);
@@ -4383,6 +4486,10 @@ public class FileServer {
         if (incoming.get(1)) {
           struct.contents = iprot.readString();
           struct.setContentsIsSet(true);
+        }
+        if (incoming.get(2)) {
+          struct.version = iprot.readI32();
+          struct.setVersionIsSet(true);
         }
       }
     }

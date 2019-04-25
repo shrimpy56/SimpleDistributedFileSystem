@@ -1,17 +1,15 @@
 #!/bin/bash
 cd class
-error_string="Parameter Error. Using \"./run.sh Client\" , \"./run.sh Coordinator\" or \"./run.sh FileServer\""
+params = $*
 if [ $1 == 'Client' ]
 then
-    java -cp ".:/usr/local/Thrift/*" Client
-elif [ $1 == 'FileServer' ]
+    java -cp ".:/usr/local/Thrift/*" Client {$params:2}
+elif [ $1 == 'Server' ]
 then
-    params = $*
     java -cp ".:/usr/local/Thrift/*" Server {$params:2}
 elif [ $1 == 'Coordinator' ]
 then
-    params = $*
     java -cp ".:/usr/local/Thrift/*" Coordinator {$params:2}
 else
-    echo $error_string
+    echo "Parameter Error. Using \"./run.sh Client\" , \"./run.sh Coordinator\" or \"./run.sh Server\" with parameters."
 fi
