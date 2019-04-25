@@ -20,17 +20,17 @@ chmod +x auto_test.sh
 ./run.sh Coordinator 9999 4 4 7
 # set Nr=4, Nw=4, N=7 (include the Coordinator), we run it on atlas.cselabs.umn.edu
 ./run.sh Server atlas.cselabs.umn.edu 9999 10000
-# we run it on csel-kh4250-01.cselabs.umn.edu
+# we run it at csel-kh4250-01.cselabs.umn.edu
 ./run.sh Server atlas.cselabs.umn.edu 9999 10001
-# we run it on csel-kh4250-02.cselabs.umn.edu
+# we run it at csel-kh4250-02.cselabs.umn.edu
 ./run.sh Server atlas.cselabs.umn.edu 9999 10002
-# we run it on csel-kh4250-03.cselabs.umn.edu
+# we run it at csel-kh4250-03.cselabs.umn.edu
 ./run.sh Server atlas.cselabs.umn.edu 9999 10003
-# we run it on csel-kh4250-04.cselabs.umn.edu
+# we run it at csel-kh4250-04.cselabs.umn.edu
 ./run.sh Server atlas.cselabs.umn.edu 9999 10004
-# we run it on csel-kh4250-05.cselabs.umn.edu
+# we run it at csel-kh4250-05.cselabs.umn.edu
 ./run.sh Server atlas.cselabs.umn.edu 9999 10005
-# we run it on csel-kh4250-06.cselabs.umn.edu
+# we run it at csel-kh4250-06.cselabs.umn.edu
 ```
 
 3. run the Client with all FileServers. UI mode.
