@@ -16,7 +16,7 @@ public class CoordinatorHandler extends FileServerHandler implements FileServer.
     private static AtomicBoolean running = new AtomicBoolean(false);
     private static AtomicInteger ReqNum = new AtomicInteger(0);
     private final int Nr, Nw, N;
-    private static Map<String, Queue<Request>> RequestQueue = new HashMap<String, Queue<Request>>();
+    private static Map<String, Queue<Request>> RequestQueue = new ConcurrentHashMap<>();
 
     public CoordinatorHandler(int _nr, int _nw, int _n, String _ip, int _port) {
         this.Nr = _nr;
@@ -71,7 +71,7 @@ public class CoordinatorHandler extends FileServerHandler implements FileServer.
         Request req = new Request(true, SelfNum, filename, null);
         Queue<Request> tmp = RequestQueue.get(filename);
         if (tmp == null) {
-            tmp = new LinkedList<Request>();
+            tmp = new ConcurrentLinkedQueue<Request>();
         }
         tmp.add(req);
         RequestQueue.put(filename, tmp);
@@ -102,7 +102,7 @@ public class CoordinatorHandler extends FileServerHandler implements FileServer.
         Request req = new Request(false, SelfNum, filename, contents);
         Queue<Request> tmp = RequestQueue.get(filename);
         if (tmp == null) {
-            tmp = new LinkedList<Request>();
+            tmp = new ConcurrentLinkedQueue<Request>();
         }
         tmp.add(req);
         RequestQueue.put(filename, tmp);
@@ -296,7 +296,7 @@ public class CoordinatorHandler extends FileServerHandler implements FileServer.
             Request req = new Request(false, SelfNum, null, null);
             Queue<Request> tmp = RequestQueue.get(filename);
             if (tmp == null) {
-                tmp = new LinkedList<Request>();
+                tmp = new ConcurrentLinkedQueue<Request>();
             }
             tmp.add(req);
             RequestQueue.put(filename, tmp);
